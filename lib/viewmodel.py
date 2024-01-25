@@ -1,0 +1,206 @@
+import datetime
+import os
+
+from asyncache import cached
+from cachetools import TTLCache
+from sqlalchemy import update, func, and_, case, String, delete
+from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.future import select
+from telebot.types import User as TelebotUser
+
+from lib.callback_texts import CALLBACK_TEXTS
+from models import Groups, Users
+
+
+UserCache = TTLCache(1024, 60)
+engine = create_async_engine(
+    os.getenv('PG_URI_ASYNC'),
+    echo=False
+)
+AsyncSession = async_sessionmaker(engine, expire_on_commit=False)
+
+
+GENERATIVE_MONTHS = {
+    1: 'января',
+    2: 'февраля',
+    3: 'марта',
+    4: 'апреля',
+    5: 'мая',
+    6: 'июня',
+    7: 'июля',
+    8: 'августа',
+    9: 'сентября',
+    10: 'октября',
+    11: 'ноября',
+    12: 'декабря',
+}
+
+
+@cached(UserCache, lambda x: x.id)
+async def get_user(user_payload: TelebotUser) -> Users:
+    stmt = (
+        insert(Users)
+        .values(
+            id=user_payload.id,
+            username=user_payload.username if user_payload.username else '',
+            first_name=user_payload.first_name if user_payload.first_name else '',
+            last_name=user_payload.last_name if user_payload.last_name else ''
+        )
+    )
+    stmt = (
+        stmt.on_conflict_do_update(
+            index_elements=[Users.id],
+            set_=dict(username=stmt.excluded.username)
+        )
+        .returning(Users)
+    )
+    async with AsyncSession.begin() as session:
+        q = await session.execute(stmt)
+        user = q.scalar()
+    return user
+
+
+@cached(UserCache, lambda x: x)
+async def get_user_by_id(id_: int) -> Users|None:
+    req = select(Users).where(Users.id == id_)
+    async with AsyncSession.begin() as session:
+        q = await session.execute(req)
+    return q.scalar()
+
+
+async def set_user_name_data(name, surname, user_payload: TelebotUser) -> None:
+    user = await get_user(user_payload)
+    user_id = user.id
+    naming_req = (
+        update(Users)
+        .where(Users.id == user_id)
+        .values(
+            first_name=name,
+            last_name=surname,
+        )
+    )
+    async with AsyncSession.begin() as session:
+        await session.execute(naming_req)
+    UserCache.clear()
+
+
+async def get_user_info(user_payload: TelebotUser):
+    user = await get_user(user_payload)
+    req = (
+        select(
+            func.jsonb_build_array(select(Groups.id).where(Groups.userid == user.id).scalar_subquery()).label('groupids'),
+            Users.first_name,
+            Users.last_name,
+            Users.username,
+            Users.wish_string.label('my_wishes'),
+            Users.birthday
+        )
+        .join(Groups, Groups.userid == Users.id)
+        .where(Users.id == user.id)
+    )
+    async with AsyncSession.begin() as session:
+        q = await session.execute(req)
+        data = q.one_or_none()
+        if data is None:
+            return CALLBACK_TEXTS.database_error
+    return data
+
+
+async def set_wishes(user_id: int, wishes: str):
+    req = update(Users).where(Users.id == user_id).values(wish_string=wishes)
+    async with AsyncSession.begin() as session:
+        await session.execute(req)
+    UserCache.clear()
+
+
+async def set_birthday(user_id: int, birthday: datetime.date):
+    req = update(Users).where(Users.id == user_id).values(birthday=birthday)
+    async with AsyncSession.begin() as session:
+        await session.execute(req)
+    UserCache.clear()
+
+
+async def get_members(user_payload: TelebotUser):
+    user = await get_user(user_payload)
+    if not user.groupid:
+        m_str = CALLBACK_TEXTS.is_not_joined
+    else:
+        room_req = (
+            select(
+                func.row_number().over().label('rnum'),
+                case((Users.birthday != None, Users.birthday.cast(String)), else_='').label('birthday'),
+                Users.username,
+                Users.first_name,
+                Users.last_name,
+            )
+            .join(Groups, Groups.id == Users.groupid)
+            .where(Groups.id == user.groupid)
+            .order_by(Users.last_name, Users.first_name, Users.birthday)
+        )
+        async with AsyncSession.begin() as session:
+            q = await session.execute(room_req)
+            members = q.all()
+        m_str = '\n'.join([f'{m.rnum}. {m.birthday} @{m.username} {m.first_name} {m.last_name}' for m in members])
+    return m_str
+
+
+async def get_user_groups(userid: int) -> list[int]:
+    req = select(Groups.id).where(Groups.userid == userid)
+    async with AsyncSession.begin() as session:
+        q = await session.execute(req)
+    return q.scalars().all()
+
+
+def how_old(birthday: datetime.date) -> str:
+    if not birthday:
+        return ''
+    td = datetime.date.today()
+    if td.month > birthday.month or (td.month == birthday.month and td.day >= birthday.day):
+        old = td.year - birthday.year
+    else:
+        old = td.year - birthday.year - 1
+    return f'({old} лет)'
+
+
+def when_bd(birthday: datetime.date) -> str:
+    if not birthday: return ''
+    td = datetime.date.today()
+    fbd = birthday.replace(year=td.year)
+    if fbd < td:
+        fbd = birthday.replace(year=td.year+1)
+    days = (fbd - td).days
+    return f'{birthday.day} {GENERATIVE_MONTHS[birthday.month]} (осталось {days} дней до ДР)'
+
+
+async def get_group_participants_list(chat) -> str:
+    participants = await get_group_participants(chat.id)
+    msg = CALLBACK_TEXTS.participants_header.format(groupname=chat.title)
+    lst = [
+        f'{i}. @{m.username} {m.first_name} {m.last_name} {when_bd(m.birthday)} {how_old(m.birthday)}'
+        for i, m in enumerate(participants)
+    ]
+    msg += '\n'.join(lst)
+    return msg
+
+
+async def get_group_participants(chatid: int) -> list[Users]:
+    req = select(Users).select_from(Groups).join(
+        Users, Groups.userid == Users.id).where(
+        Groups.id == chatid).order_by(Users.birthday)
+    async with AsyncSession.begin() as session:
+        q = await session.execute(req)
+    return q.scalars().all()
+
+
+async def add_new_chat_member(userid: int, chatid: int):
+    req = insert(Groups).values(id=chatid, userid=userid)
+    req = req.on_conflict_do_nothing(index_elements=['id', 'userid'])
+    async with AsyncSession.begin() as session:
+        q = await session.execute(req)
+
+
+async def remove_chat_member(userid: int, chatid: int):
+    req = delete(Groups).where(Groups.id == chatid, Groups.userid == userid)
+    async with AsyncSession.begin() as session:
+        q = await session.execute(req)

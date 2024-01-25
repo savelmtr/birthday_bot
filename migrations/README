@@ -1,0 +1,7 @@
+TOKEN=token
+POSTGRES_USER=test
+POSTGRES_PASSWORD=test
+POSTGRES_DB=test
+
+PG_URI='postgresql://test:test@db:5432/test'
+PG_URI_ASYNC='postgresql+asyncpg://test:test@db:5432/test'

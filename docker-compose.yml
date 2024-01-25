@@ -1,0 +1,43 @@
+version: '3.9'
+services:
+  app:
+    build: .
+    command: python main.py
+    volumes:
+      - .:/code
+    env_file:
+      - .env
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"
+  init:
+    build: .
+    command: alembic upgrade head
+    volumes:
+      - .:/code
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    image: postgres:12.0-alpine
+    ports:
+     - 5432:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "test"]
+      interval: 5s
+      retries: 5
+    restart: always
+volumes:
+  postgres_data:

@@ -1,0 +1,8 @@
+pyTelegramBotAPI
+aiohttp
+alembic
+psycopg2-binary
+asyncpg
+sqlalchemy
+cryptography
+asyncache == 0.3.1
