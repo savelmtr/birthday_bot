@@ -5,13 +5,14 @@ from telebot.types import (CallbackQuery, InlineKeyboardButton, ChatMemberUpdate
 from lib.base import CustomBot
 from lib.callback_texts import CALLBACK_TEXTS
 from lib.states import States
-from lib.viewmodel import (get_user, add_new_chat_member, remove_chat_member,
+from lib.viewmodel import (get_user, add_new_chat_member, remove_chat_member, get_user_wishes,
                            set_birthday, set_user_name_data, set_wishes)
 
 from lib.buttons import ChangeWishes, ChangeMyName, ChangeBirthday
 
 
 async def start(message: Message, data, bot: CustomBot):
+    print(message.text)
     payload = message.text[6:].strip()
     if not payload:
         await bot.reply_to(message, CALLBACK_TEXTS.welcome)
@@ -29,6 +30,15 @@ async def start(message: Message, data, bot: CustomBot):
             CALLBACK_TEXTS.you_ware_added_as_memeber_of_group.format(chatname=chat.title)
         )
 
+
+async def check_user_wishes(call: CallbackQuery, data, bot: CustomBot):
+    payload = call.data[7:].strip()
+    usr = await get_user_wishes(call.from_user.id, int(payload))
+    if not usr:
+        await bot.send_message(call.from_user.id, CALLBACK_TEXTS.wishes_unavailable)
+    else:
+        await bot.send_message(call.from_user.id, CALLBACK_TEXTS.wishes_of_user.format(
+            f_name=usr.first_name, l_name=usr.last_name, wishes=usr.wish_string))
 
 async def update_wishes(message: Message, data, bot: CustomBot):
     wishes = message.text

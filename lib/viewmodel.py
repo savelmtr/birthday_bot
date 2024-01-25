@@ -4,10 +4,12 @@ import os
 from asyncache import cached
 from cachetools import TTLCache
 from sqlalchemy import update, func, and_, case, String, delete
+from sqlalchemy.orm import aliased
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.future import select
-from telebot.types import User as TelebotUser
+from telebot.types import User as TelebotUser, InlineKeyboardMarkup, InlineKeyboardButton
+
 
 from lib.callback_texts import CALLBACK_TEXTS
 from models import Groups, Users
@@ -160,7 +162,7 @@ def how_old(birthday: datetime.date) -> str:
         old = td.year - birthday.year
     else:
         old = td.year - birthday.year - 1
-    return f'({old} лет)'
+    return f'\({old} лет\)'
 
 
 def when_bd(birthday: datetime.date) -> str:
@@ -170,18 +172,69 @@ def when_bd(birthday: datetime.date) -> str:
     if fbd < td:
         fbd = birthday.replace(year=td.year+1)
     days = (fbd - td).days
-    return f'{birthday.day} {GENERATIVE_MONTHS[birthday.month]} (осталось {days} дней до ДР)'
+    bdstr = f'{birthday.day} {GENERATIVE_MONTHS[birthday.month]}'
+    if days < 20:
+        match int(str(days)[-1]):
+            case 1:
+                daystr = 'день'
+            case 2 | 3 | 4:
+                daystr = 'дня'
+            case _:
+                daystr = 'дней'
+        return f'{bdstr} **осталось {days} {daystr} до ДР**'
+    return bdstr
 
 
-async def get_group_participants_list(chat) -> str:
+async def get_group_participants_list(chat, me) -> tuple[str, list[int]]:
     participants = await get_group_participants(chat.id)
     msg = CALLBACK_TEXTS.participants_header.format(groupname=chat.title)
     lst = [
-        f'{i}. @{m.username} {m.first_name} {m.last_name} {when_bd(m.birthday)} {how_old(m.birthday)}'
+        f'{i}\. @{m.username} {m.first_name} {m.last_name} {how_old(m.birthday)} {when_bd(m.birthday)} ' \
+        f'[увлечения и пожелания](https://t.me/{me.username}/?start=wishes-{m.id})'
         for i, m in enumerate(participants)
     ]
     msg += '\n'.join(lst)
-    return msg
+    msg += CALLBACK_TEXTS.to_check_wishes_press_a_btn
+    return msg, [(i, m.id) for i, m in enumerate(participants)]
+
+
+def make_user_wishes_btns_markup(
+    userids: list[tuple[int, int]], offset: int=0) -> InlineKeyboardMarkup:
+    markup = InlineKeyboardMarkup()
+    btns = []
+    if offset:
+        if len(userids[offset:]) > 7:
+            stop = offset + 6
+        else:
+            stop = offset + 7
+    else:
+        if len(userids) > 8:
+            stop = offset + 7
+        else:
+            stop = offset + 8
+    if offset:
+        btns.append(InlineKeyboardButton(text='<<', callback_data=f'inline_keyboard {max(offset-1, 0)}'))
+    for number, userid in userids[offset: stop]:
+        btns.append(InlineKeyboardButton(text=number, callback_data=f'wishes {userid}'))
+    if stop < len(userids):
+        btns.append(InlineKeyboardButton(text='>>', callback_data=f'inline_keyboard {min(offset+1, len(userids))}'))
+    markup.add(*btns)
+    return markup
+
+
+async def get_user_wishes(askerid: int, userid: int) -> Users|None:
+    asker = aliased(Users)
+    user = aliased(Users)
+    req = (
+        select(user)
+        .select_from(asker)
+        .join(Groups, Groups.userid == asker.id)
+        .join(user, Groups.userid == user.id)
+        .where(asker.id == askerid, user.id == userid)
+    )
+    async with AsyncSession.begin() as session:
+        q = await session.execute(req)
+    return q.scalar()
 
 
 async def get_group_participants(chatid: int) -> list[Users]:

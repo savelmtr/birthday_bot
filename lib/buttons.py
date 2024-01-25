@@ -2,7 +2,7 @@ from telebot.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 
 from lib.base import AbstractButton, AbstractButtonSet, CustomBot
 from lib.states import States
-from lib.viewmodel import (get_user_groups, get_user_info, get_group_participants_list)
+from lib.viewmodel import (get_user_groups, get_user_info, get_group_participants_list, make_user_wishes_btns_markup)
 from lib.callback_texts import CALLBACK_TEXTS
 import asyncio
 
@@ -16,22 +16,24 @@ class GetTeamMates(AbstractButton):
 
     async def run(self, message: Message):
         groupids = await get_user_groups(message.from_user.id)
+        me = await self.bot.get_me()
+        markup = None
         match len(groupids):
             case 0:
                 msg = CALLBACK_TEXTS.you_participate_no_groups
             case 1:
                 chat = await self.bot.get_chat(groupids[0])
-                msg = await get_group_participants_list(chat)
+                msg, userids = await get_group_participants_list(chat, me)
+                markup = make_user_wishes_btns_markup(userids, 0)
             case 3:
                 chats = await asyncio.gather(*[self.bot.get_chat(gid) for gid in groupids])
                 chats = sorted(chats, key=lambda c: c.title)
-                me = await self.bot.get_me()
                 lst = [
                     f'{i}. {chat.title} https://t.me/{me.username}/?participants={chat.id}'
                     for i, chat in enumerate(chats)
                 ]
                 msg = CALLBACK_TEXTS.choose_chat + '\n'.join(lst)
-        await self.bot.send_message(message.chat.id, msg)
+        await self.bot.send_message(message.chat.id, msg, parse_mode='MarkdownV2', reply_markup=markup)
 
 
 class GetMyData(AbstractButton):
