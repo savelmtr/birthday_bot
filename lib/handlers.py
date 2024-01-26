@@ -84,7 +84,7 @@ async def notext_input(message: Message, data, bot: CustomBot):
 async def update_name(message: Message, data, bot: CustomBot):
     name_data = str(message.text).split(' ', 1)
     first_name, last_name = (name_data + [''])[:2]
-    if not re.match(r'[\s\w]+', first_name) or not re.match(r'[\s\w]+', last_name):
+    if not re.match(r'[\s\w]+', first_name) or (not re.match(r'[\s\w]+', last_name) and last_name):
         await bot.reply_to(message, CALLBACK_TEXTS.only_alpha)
         await bot.set_state(message.from_user.id, States.update_name, message.chat.id)
         return
