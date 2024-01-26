@@ -39,16 +39,15 @@ class GetTeamMates(AbstractButton):
 class GetMyData(AbstractButton):
     name = 'Мои данные 📋'
 
-    async def get_groupnames(self, groupids: list[int]):
+    async def get_groupnames(self, groupids: list[int]) -> str:
         chats = await asyncio.gather(*[
             self.bot.get_chat(gid)
-            for gid in groupids
+            for gid in groupids if gid
         ])
         names = [c.title for c in chats]
         return ', '.join(names)
 
     async def run(self, message: Message):
-        bot_info = await self.bot.get_me()
         data = await get_user_info(message.from_user)
         msgs = []
         for kwargs, callback_text in (
@@ -60,11 +59,7 @@ class GetMyData(AbstractButton):
             if any(kwargs.values()):
                 msgs.append(callback_text.format(**kwargs))
         msg = '\n'.join(msgs)
-        try:
-            await self.bot.send_message(message.from_user.id, msg)
-        except:
-            import traceback
-            traceback.print_exc()
+        await self.bot.send_message(message.from_user.id, msg)
 
 
 class ChangeMyName(AbstractButton):
