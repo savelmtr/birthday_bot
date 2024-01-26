@@ -98,14 +98,13 @@ async def get_user_info(user_payload: TelebotUser):
             Users.wish_string.label('my_wishes'),
             Users.birthday
         )
-        .join(Groups, Groups.userid == Users.id)
         .where(Users.id == user.id)
     )
     async with AsyncSession.begin() as session:
         q = await session.execute(req)
         data = q.one_or_none()
         if data is None:
-            return CALLBACK_TEXTS.database_error
+            raise Exception(CALLBACK_TEXTS.database_error)
     return data
 
 
