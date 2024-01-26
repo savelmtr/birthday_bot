@@ -172,7 +172,7 @@ def how_old(birthday: datetime.date) -> str:
     else:
         old = td.year - birthday.year - 1
     ystr = get_word_plural_form(('год', 'года', 'лет'), old)
-    return f'\({old} ystr\)'
+    return f'\({old} {ystr}\)'
 
 
 def when_bd(birthday: datetime.date) -> str:
