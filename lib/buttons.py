@@ -60,7 +60,7 @@ class GetMyData(AbstractButton):
             if any(kwargs.values()):
                 msgs.append(callback_text.format(**kwargs))
         msg = '\n'.join(msgs)
-        await self.bot.send_message(message.chat.id, msg)
+        await self.bot.send_message(message.from_user.id, msg)
 
 
 class ChangeMyName(AbstractButton):
