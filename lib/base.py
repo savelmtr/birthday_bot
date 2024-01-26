@@ -76,7 +76,7 @@ class CustomBot(AsyncTeleBot):
         if message_thread_id:
             raise NotImplemented('message_thread_id')
         reply_markup = reply_markup or await self.get_available_buttonset(chat_id)
-        await super().send_message(
+        return await super().send_message(
             int(chat_id), text, parse_mode, entities, disable_web_page_preview,
             disable_notification, protect_content, reply_to_message_id,
             allow_sending_without_reply, reply_markup,

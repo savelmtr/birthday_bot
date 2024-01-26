@@ -1,10 +1,10 @@
 from telebot.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 
 from lib.base import AbstractButton, AbstractButtonSet, CustomBot
-from lib.states import States
 from lib.viewmodel import (get_user_groups, get_user_info, get_group_participants_list, make_user_wishes_btns_markup)
 from lib.callback_texts import CALLBACK_TEXTS
 import asyncio
+from lib.states import States, QUESTION_MESSAGES
 
 
 CANCEL_MARKUP = InlineKeyboardMarkup()
@@ -67,7 +67,7 @@ class ChangeMyName(AbstractButton):
     name = 'Изменить имя ✍'
 
     async def run(self, message: Message):
-        await self.bot.send_message(
+        QUESTION_MESSAGES[message.chat.id] = await self.bot.send_message(
             message.chat.id,
             CALLBACK_TEXTS.change_name_proposal,
             reply_markup=CANCEL_MARKUP
@@ -79,7 +79,7 @@ class ChangeWishes(AbstractButton):
     name = 'Изменить пожелания и интересы 🎀'
 
     async def run(self, message: Message):
-        await self.bot.send_message(
+        QUESTION_MESSAGES[message.chat.id] = await self.bot.send_message(
             message.chat.id,
             CALLBACK_TEXTS.change_wishes_proposal,
             reply_markup=CANCEL_MARKUP
@@ -91,7 +91,7 @@ class ChangeBirthday(AbstractButton):
     name = 'Установить дату дня рождения 👶'
 
     async def run(self, message: Message):
-        await self.bot.send_message(
+        QUESTION_MESSAGES[message.chat.id] = await self.bot.send_message(
             message.chat.id,
             CALLBACK_TEXTS.set_birthday_proposal,
             reply_markup=CANCEL_MARKUP

@@ -1,18 +1,21 @@
+import asyncio
 import datetime
+import re
 from telebot.types import (CallbackQuery, InlineKeyboardButton, ChatMemberUpdated,
                            InlineKeyboardMarkup, Message)
 
 from lib.base import CustomBot
 from lib.callback_texts import CALLBACK_TEXTS
-from lib.states import States
-from lib.viewmodel import (get_user, add_new_chat_member, remove_chat_member, get_user_wishes,
-                           set_birthday, set_user_name_data, set_wishes)
+from lib.states import States, QUESTION_MESSAGES
+from lib.viewmodel import (get_user, add_new_chat_member, remove_chat_member,
+                           get_user_wishes, get_group_participants,
+                           set_birthday, set_user_name_data, set_wishes,
+                           make_user_wishes_btns_markup)
 
 from lib.buttons import ChangeWishes, ChangeMyName, ChangeBirthday
 
 
 async def start(message: Message, data, bot: CustomBot):
-    print(message.text)
     payload = message.text[6:].strip()
     if not payload:
         await bot.reply_to(message, CALLBACK_TEXTS.welcome)
@@ -40,6 +43,12 @@ async def check_user_wishes(call: CallbackQuery, data, bot: CustomBot):
         await bot.send_message(call.from_user.id, CALLBACK_TEXTS.wishes_of_user.format(
             f_name=usr.first_name, l_name=usr.last_name, wishes=usr.wish_string))
 
+
+async def notext_input(message: Message, data, bot: CustomBot):
+    await bot.reply_to(message, CALLBACK_TEXTS.incorrect_input)
+    return
+
+
 async def update_wishes(message: Message, data, bot: CustomBot):
     wishes = message.text
     try:
@@ -49,40 +58,40 @@ async def update_wishes(message: Message, data, bot: CustomBot):
         return
     await bot.delete_state(message.from_user.id, message.chat.id)
     await bot.reply_to(message, CALLBACK_TEXTS.wishes_updated)
+    await bot.delete_message(message.chat.id, QUESTION_MESSAGES[message.chat.id].id)
 
 
 async def update_birthday(message: Message, data, bot: CustomBot):
     try:
         birthday = datetime.date.fromisoformat(message.text)
     except ValueError:
-        await bot.reply_to(message, CALLBACK_TEXTS.incorrect_birthday(text=message.text))
+        await bot.reply_to(message, CALLBACK_TEXTS.incorrect_birthday.format(text=message.text))
+        return
+    td = datetime.date.today()
+    if birthday > td or (td - birthday).days // 365 > 100:
+        await bot.reply_to(message, CALLBACK_TEXTS.incorrect_birthday.format(text=message.text))
         return
     await set_birthday(message.from_user.id, birthday)
     await bot.delete_state(message.from_user.id, message.chat.id)
     await bot.reply_to(message, CALLBACK_TEXTS.birthday_updated.format(birthday=str(birthday)))
+    await bot.delete_message(message.chat.id, QUESTION_MESSAGES[message.chat.id].id)
+
+
+async def notext_input(message: Message, data, bot: CustomBot):
+    await bot.reply_to(message, CALLBACK_TEXTS.incorrect_input)
 
 
 async def update_name(message: Message, data, bot: CustomBot):
     name_data = str(message.text).split(' ', 1)
     first_name, last_name = (name_data + [''])[:2]
-    if not first_name.isalpha() or (not last_name.isalpha() and last_name):
-        await bot.reply_to(message, 'Назовите себя, используя только буквы 😀')
+    if not re.match(r'[\s\w]+', first_name) or not re.match(r'[\s\w]+', last_name):
+        await bot.reply_to(message, CALLBACK_TEXTS.only_alpha)
         await bot.set_state(message.from_user.id, States.update_name, message.chat.id)
         return
     await set_user_name_data(first_name, last_name, message.from_user)
     await bot.delete_state(message.from_user.id, message.chat.id)
     await bot.reply_to(message, CALLBACK_TEXTS.name_has_been_changed.format(new_name=' '.join(name_data)))
-
-
-def get_name_wishes_markup():
-    change_name_btn = InlineKeyboardButton(text='Как меня зовут', callback_data='change_name')
-    set_wishes_btn = InlineKeyboardButton(text='Мои интересы и пожелания', callback_data='set_wishes')
-    birthday_btn = InlineKeyboardButton(text='Когда мой день рождения', callback_data='set_birthday')
-    markup = InlineKeyboardMarkup()
-    markup.add(change_name_btn)
-    markup.add(set_wishes_btn)
-    markup.add(birthday_btn)
-    return markup
+    await bot.delete_message(message.chat.id, QUESTION_MESSAGES[message.chat.id].id)
 
 
 async def callback_query(call: CallbackQuery, data, bot: CustomBot):
@@ -99,6 +108,20 @@ async def callback_query(call: CallbackQuery, data, bot: CustomBot):
             await bot.delete_state(call.from_user.id, call.from_user.id)
             await bot.delete_message(call.from_user.id, call.message.id)
             await bot.send_message(call.from_user.id, CALLBACK_TEXTS.cancel_successfull)
+
+
+async def user_wishes_keyboard_shift(call: CallbackQuery, data, bot: CustomBot):
+    try:
+        offset = int(call.data[16:])
+    except:
+        import traceback
+        traceback.print_exc()
+        return
+    participants = await get_group_participants(call.chat.id)
+    userids = [(i, m.id) for i, m in enumerate(participants)]
+    markup = make_user_wishes_btns_markup(userids, offset)
+    await bot.edit_message_reply_markup(call.chat.id, call.message.id, reply_markup=markup)
+
 
 
 async def my_chats_updated(chat_updated: ChatMemberUpdated, bot: CustomBot):

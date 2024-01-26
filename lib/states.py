@@ -5,3 +5,6 @@ class States(StatesGroup):
     update_birthday = State()
     update_name = State()
     update_wishes = State()
+
+
+QUESTION_MESSAGES = {}
