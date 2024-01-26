@@ -153,6 +153,16 @@ async def get_user_groups(userid: int) -> list[int]:
     return q.scalars().all()
 
 
+def get_word_plural_form(word_forms: tuple[str,str,str], number: int):
+    match int(str(number)[-1]):
+            case 1:
+                return word_forms[0]
+            case 2 | 3 | 4:
+                return word_forms[1]
+            case _:
+                return word_forms[2]
+
+
 def how_old(birthday: datetime.date) -> str:
     if not birthday:
         return ''
@@ -161,7 +171,8 @@ def how_old(birthday: datetime.date) -> str:
         old = td.year - birthday.year
     else:
         old = td.year - birthday.year - 1
-    return f'\({old} лет\)'
+    ystr = get_word_plural_form(('год', 'года', 'лет'), old)
+    return f'\({old} ystr\)'
 
 
 def when_bd(birthday: datetime.date) -> str:
@@ -173,13 +184,7 @@ def when_bd(birthday: datetime.date) -> str:
     days = (fbd - td).days
     bdstr = f'{birthday.day} {GENERATIVE_MONTHS[birthday.month]}'
     if days < 20:
-        match int(str(days)[-1]):
-            case 1:
-                daystr = 'день'
-            case 2 | 3 | 4:
-                daystr = 'дня'
-            case _:
-                daystr = 'дней'
+        daystr = get_word_plural_form(('день', 'дня', 'дней'), days)
         return f'{bdstr} **осталось {days} {daystr} до ДР**'
     return bdstr
 
