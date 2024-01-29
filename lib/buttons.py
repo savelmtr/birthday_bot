@@ -1,7 +1,7 @@
 from telebot.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 
 from lib.base import AbstractButton, AbstractButtonSet, CustomBot
-from lib.viewmodel import (get_user_groups, get_user_info, get_group_participants_list, make_user_wishes_btns_markup)
+from lib.viewmodel import (get_user_groups, get_user_info, get_user, get_group_participants_list, make_user_wishes_btns_markup)
 from lib.callback_texts import CALLBACK_TEXTS
 import asyncio
 from lib.states import States, QUESTION_MESSAGES
@@ -78,9 +78,11 @@ class ChangeWishes(AbstractButton):
     name = 'Изменить пожелания и интересы 🎀'
 
     async def run(self, message: Message):
+        user = await get_user(message.from_user)
         QUESTION_MESSAGES[message.chat.id] = await self.bot.send_message(
             message.chat.id,
-            CALLBACK_TEXTS.change_wishes_proposal,
+            CALLBACK_TEXTS.change_wishes_proposal +
+                CALLBACK_TEXTS.your_wishes.format(wishes=user.wish_string) if user.wish_string else '',
             reply_markup=CANCEL_MARKUP
         )
         await self.bot.set_state(message.from_user.id, States.update_wishes, message.chat.id)
