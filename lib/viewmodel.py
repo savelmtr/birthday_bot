@@ -137,7 +137,7 @@ async def get_members(user_payload: TelebotUser):
             )
             .join(Groups, Groups.id == Users.groupid)
             .where(Groups.id == user.groupid)
-            .order_by(Users.last_name, Users.first_name, Users.birthday)
+            .order_by(Users.first_name, Users.last_name)
         )
         async with AsyncSession.begin() as session:
             q = await session.execute(room_req)
