@@ -20,7 +20,7 @@ class CALLBACK_TEXTS:
     your_wishes = '\n На данный момент ваши пожелания: {wishes}'
     name_has_been_changed = 'Имя изменено на {new_name}'
     set_birthday_proposal = 'Введите свой день рождения в формате ГГГГ-ММ-ДД'
-    incorrect_birthday = 'Вы ввели некорретную дату дня рождения: {text}'
+    incorrect_birthday = 'Вы ввели некорретную дату дня рождения: {text}. Попробуйте ещё раз.'
     birthday_updated = 'День рождения обновлён ({birthday})'
     my_birthday = 'Твой день рождения: {birthday}'
     cancel_successfull = 'Хорошо, в другой раз.'
