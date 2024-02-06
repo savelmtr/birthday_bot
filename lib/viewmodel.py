@@ -1,4 +1,5 @@
 import datetime
+from itertools import zip_longest
 import os
 
 from asyncache import cached
@@ -8,7 +9,7 @@ from sqlalchemy.orm import aliased
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.future import select
-from telebot.types import User as TelebotUser, InlineKeyboardMarkup, InlineKeyboardButton
+from telebot.types import User as TelebotUser, InlineKeyboardMarkup, InlineKeyboardButton, Chat
 
 
 from lib.callback_texts import CALLBACK_TEXTS
@@ -189,7 +190,7 @@ def when_bd(birthday: datetime.date) -> str:
     return bdstr
 
 
-async def get_group_participants_list(chat, me) -> tuple[str, list[int]]:
+async def get_group_participants_list(chat) -> tuple[str, list[int]]:
     participants = await get_group_participants(chat.id)
     msg = CALLBACK_TEXTS.participants_header.format(groupname=chat.title)
     lst = [
@@ -222,6 +223,17 @@ def make_user_wishes_btns_markup(
     if stop < len(userids):
         btns.append(InlineKeyboardButton(text='>>', callback_data=f'inline_keyboard {min(offset+1, len(userids))}'))
     markup.add(*btns)
+    return markup
+
+
+def make_chats_markup(chats: Chat) -> InlineKeyboardMarkup:
+    markup = InlineKeyboardMarkup()
+    chbutns = (
+        InlineKeyboardButton(text=ch.title, callback_data=f'chat_members {ch.id}')
+        for ch in chats
+    )
+    for chline in zip_longest(*[chbutns] * 2):
+        markup.add(*chline)
     return markup
 
 

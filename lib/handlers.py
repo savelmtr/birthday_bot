@@ -1,14 +1,13 @@
 import asyncio
 import datetime
 import re
-from telebot.types import (CallbackQuery, InlineKeyboardButton, ChatMemberUpdated,
-                           InlineKeyboardMarkup, Message)
+from telebot.types import (CallbackQuery, ChatMemberUpdated, Message)
 
 from lib.base import CustomBot
 from lib.callback_texts import CALLBACK_TEXTS
 from lib.states import States, QUESTION_MESSAGES
 from lib.viewmodel import (get_user, add_new_chat_member, remove_chat_member,
-                           get_user_wishes, get_group_participants,
+                           get_user_wishes, get_group_participants, get_group_participants_list,
                            set_birthday, set_user_name_data, set_wishes,
                            make_user_wishes_btns_markup)
 
@@ -144,3 +143,11 @@ async def user_come(message: Message, data, bot: CustomBot):
 
 async def user_go(message: Message, data, bot: CustomBot):
     await remove_chat_member(message.left_chat_member.id, message.chat.id)
+
+
+async def chat_members(call: CallbackQuery, data, bot: CustomBot):
+    payload = call.data[13:].strip()
+    chat = await self.bot.get_chat(int(payload))
+    msg, userids = await get_group_participants_list(chat)
+    markup = make_user_wishes_btns_markup(userids, 0)
+    await bot.send_message(call.chat.id, msg, parse_mode='MarkdownV2', reply_markup=markup)

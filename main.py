@@ -8,7 +8,7 @@ from telebot.asyncio_storage import StateMemoryStorage
 from lib.base import CustomBot
 from lib.buttons import UserButtonSet
 from lib.handlers import (callback_query, update_birthday, user_come, user_go, user_wishes_keyboard_shift,
-                            my_chats_updated, start, check_user_wishes, notext_input,
+                            my_chats_updated, start, check_user_wishes, notext_input, chat_members,
                           update_name, update_wishes)
 from lib.states import States
 
@@ -25,6 +25,7 @@ bot.message_handler(
 bot.message_handler(commands=['start'])(start)
 bot.callback_query_handler(func=lambda call: call.data.startswith('wishes'))(check_user_wishes)
 bot.callback_query_handler(func=lambda call: call.data.startswith('inline_keyboard'))(user_wishes_keyboard_shift)
+bot.callback_query_handler(func=lambda call: call.data.startswith('chat_members'))(chat_members)
 bot.message_handler(state=States.update_name, content_types=['text'])(update_name)
 bot.message_handler(state=States.update_wishes, content_types=['text'])(update_wishes)
 bot.callback_query_handler(
