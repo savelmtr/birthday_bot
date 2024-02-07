@@ -251,10 +251,11 @@ async def get_user_wishes(askerid: int, userid: int) -> Users|None:
     user = aliased(Users)
     req = (
         select(user)
-        .select_from(asker)
-        .join(Groups, Groups.userid == asker.id)
-        .join(user, Groups.userid == user.id)
-        .where(asker.id == askerid, user.id == userid)
+        .join(Groups, Groups.userid == user.id)
+        .where(
+            user.id == userid,
+            Groups.id.in_(select(Groups.id).where(Groups.userid == askerid))
+        )
     )
     async with AsyncSession.begin() as session:
         q = await session.execute(req)
