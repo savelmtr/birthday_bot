@@ -206,7 +206,8 @@ def make_user_wishes_btns_markup(
     userids: list[tuple[int, int]], groupid: int, offset: int=0) -> InlineKeyboardMarkup:
     markup = InlineKeyboardMarkup()
     btns = []
-    print(userids, offset)
+    stepf = 6
+    stepb = 6
     if len(userids) < 9:
         stop = len(userids)
         offset = 0
@@ -220,12 +221,16 @@ def make_user_wishes_btns_markup(
             stop = offset + 7
         else:
             stop = offset + 8
+    if len(userids[stop:]) < 8:
+        stepf = 7
+    if len(userids[:offset]) < 8:
+        stepb = 7
     if offset:
-        btns.append(InlineKeyboardButton(text='<<', callback_data=f'inline_keyboard {groupid} {max(offset-1, 0)}'))
+        btns.append(InlineKeyboardButton(text='<<', callback_data=f'inline_keyboard {groupid} {max(offset-stepb, 0)}'))
     for number, userid in userids[offset: stop]:
         btns.append(InlineKeyboardButton(text=number, callback_data=f'wishes {userid}'))
     if stop < len(userids):
-        btns.append(InlineKeyboardButton(text='>>', callback_data=f'inline_keyboard {groupid} {min(offset+1, len(userids))}'))
+        btns.append(InlineKeyboardButton(text='>>', callback_data=f'inline_keyboard {groupid} {min(offset+stepf, len(userids))}'))
     markup.add(*btns)
     return markup
 
