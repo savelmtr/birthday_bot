@@ -26,7 +26,7 @@ class GetTeamMates(AbstractButton):
             case 1:
                 chat = await self.bot.get_chat(groupids[0])
                 msg, userids = await get_group_participants_list(chat)
-                markup = make_user_wishes_btns_markup(userids, 0)
+                markup = make_user_wishes_btns_markup(userids, chat.id, 0)
             case x if x > 1:
                 chats = await asyncio.gather(*[self.bot.get_chat(gid) for gid in groupids])
                 chats = sorted(chats, key=lambda c: c.title)
@@ -78,13 +78,17 @@ class ChangeWishes(AbstractButton):
 
     async def run(self, message: Message):
         user = await get_user(message.from_user)
-        QUESTION_MESSAGES[message.chat.id] = await self.bot.send_message(
-            message.chat.id,
-            CALLBACK_TEXTS.change_wishes_proposal +
-                CALLBACK_TEXTS.your_wishes.format(wishes=user.wish_string) if user.wish_string else '',
-            reply_markup=CANCEL_MARKUP
-        )
-        await self.bot.set_state(message.from_user.id, States.update_wishes, message.chat.id)
+        try:
+            QUESTION_MESSAGES[message.chat.id] = await self.bot.send_message(
+                message.chat.id,
+                CALLBACK_TEXTS.change_wishes_proposal +
+                    CALLBACK_TEXTS.your_wishes.format(wishes=user.wish_string) if user.wish_string else '',
+                reply_markup=CANCEL_MARKUP
+            )
+            await self.bot.set_state(message.from_user.id, States.update_wishes, message.chat.id)
+        except:
+            import traceback
+            traceback.print_exc()
 
 
 class ChangeBirthday(AbstractButton):
