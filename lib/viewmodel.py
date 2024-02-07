@@ -92,7 +92,7 @@ async def get_user_info(user_payload: TelebotUser):
     user = await get_user(user_payload)
     req = (
         select(
-            func.jsonb_build_array(select(Groups.id).where(Groups.userid == user.id)).label('groupids'),
+            select(func.array_agg(Groups.id)).where(Groups.userid == user.id).scalar_subquery().label('groupids'),
             Users.first_name,
             Users.last_name,
             Users.username,
