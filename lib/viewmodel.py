@@ -178,16 +178,21 @@ def how_old(birthday: datetime.date) -> str:
 
 def when_bd(birthday: datetime.date) -> str:
     if not birthday: return ''
-    td = datetime.date.today()
-    fbd = birthday.replace(year=td.year)
-    if fbd < td:
-        fbd = birthday.replace(year=td.year+1)
-    days = (fbd - td).days
+    days = when_bd_days(birthday)
     bdstr = f'{birthday.day} {GENERATIVE_MONTHS[birthday.month]}'
     if days < 20:
         daystr = get_word_plural_form(('день', 'дня', 'дней'), days)
         return f'{bdstr} **осталось {days} {daystr} до ДР**'
     return bdstr
+
+
+def when_bd_days(birthday: datetime.date) -> int:
+    if not birthday: return 0
+    td = datetime.date.today()
+    fbd = birthday.replace(year=td.year)
+    if fbd < td:
+        fbd = birthday.replace(year=td.year+1)
+    return (fbd - td).days
 
 
 async def get_group_participants_list(chat) -> tuple[str, list[int]]:
@@ -263,10 +268,10 @@ async def get_user_wishes(askerid: int, userid: int) -> Users|None:
 async def get_group_participants(chatid: int) -> list[Users]:
     req = select(Users).select_from(Groups).join(
         Users, Groups.userid == Users.id).where(
-        Groups.id == chatid).order_by(Users.birthday)
+        Groups.id == chatid)
     async with AsyncSession.begin() as session:
         q = await session.execute(req)
-    return q.scalars().all()
+    return sorted(q.scalars().all(), key= lambda u: when_bd_days(u.birthday))
 
 
 async def add_new_chat_member(userid: int, chatid: int):
