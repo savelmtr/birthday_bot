@@ -207,7 +207,10 @@ def make_user_wishes_btns_markup(
     markup = InlineKeyboardMarkup()
     btns = []
     print(userids, offset)
-    if offset:
+    if len(userids) < 9:
+        stop = len(userids)
+        offset = 0
+    elif offset:
         if len(userids[offset:]) > 7:
             stop = offset + 6
         else:
