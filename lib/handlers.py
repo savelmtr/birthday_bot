@@ -118,7 +118,7 @@ async def user_wishes_keyboard_shift(call: CallbackQuery, data, bot: CustomBot):
         import traceback
         traceback.print_exc()
         return
-    
+    print(chatid, offset )
     participants = await get_group_participants(call.message.chat.id)
     userids = [(i, m.id) for i, m in enumerate(participants)]
     markup = make_user_wishes_btns_markup(userids, chatid, offset)
