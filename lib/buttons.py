@@ -78,17 +78,13 @@ class ChangeWishes(AbstractButton):
 
     async def run(self, message: Message):
         user = await get_user(message.from_user)
-        try:
-            QUESTION_MESSAGES[message.chat.id] = await self.bot.send_message(
-                message.chat.id,
-                CALLBACK_TEXTS.change_wishes_proposal +
-                    (CALLBACK_TEXTS.your_wishes.format(wishes=user.wish_string) if user.wish_string else ''),
-                reply_markup=CANCEL_MARKUP
-            )
-            await self.bot.set_state(message.from_user.id, States.update_wishes, message.chat.id)
-        except:
-            import traceback
-            traceback.print_exc()
+        QUESTION_MESSAGES[message.chat.id] = await self.bot.send_message(
+            message.chat.id,
+            CALLBACK_TEXTS.change_wishes_proposal +
+                (CALLBACK_TEXTS.your_wishes.format(wishes=user.wish_string) if user.wish_string else ''),
+            reply_markup=CANCEL_MARKUP
+        )
+        await self.bot.set_state(message.from_user.id, States.update_wishes, message.chat.id)
 
 
 class ChangeBirthday(AbstractButton):
