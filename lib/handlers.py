@@ -35,6 +35,7 @@ async def start(message: Message, data, bot: CustomBot):
 
 async def check_user_wishes(call: CallbackQuery, data, bot: CustomBot):
     payload = call.data[7:].strip()
+    print(payload)
     usr = await get_user_wishes(call.from_user.id, int(payload))
     if not usr:
         await bot.send_message(call.from_user.id, CALLBACK_TEXTS.wishes_unavailable)
