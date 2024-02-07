@@ -247,13 +247,11 @@ def make_chats_markup(chats: Chat) -> InlineKeyboardMarkup:
 
 
 async def get_user_wishes(askerid: int, userid: int) -> Users|None:
-    asker = aliased(Users)
-    user = aliased(Users)
     req = (
-        select(user)
-        .join(Groups, Groups.userid == user.id)
+        select(Users)
+        .join(Groups, Groups.userid == Users.id)
         .where(
-            user.id == userid,
+            Users.id == userid,
             Groups.id.in_(select(Groups.id).where(Groups.userid == askerid))
         )
     )
