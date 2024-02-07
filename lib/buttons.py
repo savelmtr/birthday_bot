@@ -32,7 +32,7 @@ class GetTeamMates(AbstractButton):
                 chats = sorted(chats, key=lambda c: c.title)
                 markup = make_chats_markup(chats)
                 msg = CALLBACK_TEXTS.choose_chat
-        await self.bot.send_message(message.chat.id, msg, parse_mode='MarkdownV2', reply_markup=markup)
+        await self.bot.send_message(message.chat.id, msg, reply_markup=markup)
 
 
 class GetMyData(AbstractButton):

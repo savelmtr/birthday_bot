@@ -199,7 +199,7 @@ async def get_group_participants_list(chat) -> tuple[str, list[int]]:
     participants = await get_group_participants(chat.id)
     msg = CALLBACK_TEXTS.participants_header.format(groupname=chat.title)
     lst = [
-        f'{i+1}\. @{m.username} {m.first_name} {m.last_name} {how_old(m.birthday)} {when_bd(m.birthday)} '
+        f'{i+1}. @{m.username} {m.first_name} {m.last_name} {how_old(m.birthday)} {when_bd(m.birthday)} '
         for i, m in enumerate(participants)
     ]
     msg += '\n'.join(lst)
