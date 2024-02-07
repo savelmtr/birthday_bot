@@ -203,7 +203,7 @@ async def get_group_participants_list(chat) -> tuple[str, list[int]]:
 
 
 def make_user_wishes_btns_markup(
-    userids: list[tuple[int, int]], offset: int=0) -> InlineKeyboardMarkup:
+    userids: list[tuple[int, int]], groupid: int, offset: int=0) -> InlineKeyboardMarkup:
     markup = InlineKeyboardMarkup()
     btns = []
     if offset:
@@ -217,11 +217,11 @@ def make_user_wishes_btns_markup(
         else:
             stop = offset + 8
     if offset:
-        btns.append(InlineKeyboardButton(text='<<', callback_data=f'inline_keyboard {max(offset-1, 0)}'))
+        btns.append(InlineKeyboardButton(text='<<', callback_data=f'inline_keyboard {groupid} {max(offset-1, 0)}'))
     for number, userid in userids[offset: stop]:
         btns.append(InlineKeyboardButton(text=number, callback_data=f'wishes {userid}'))
     if stop < len(userids):
-        btns.append(InlineKeyboardButton(text='>>', callback_data=f'inline_keyboard {min(offset+1, len(userids))}'))
+        btns.append(InlineKeyboardButton(text='>>', callback_data=f'inline_keyboard {groupid} {min(offset+1, len(userids))}'))
     markup.add(*btns)
     return markup
 

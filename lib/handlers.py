@@ -111,14 +111,17 @@ async def callback_query(call: CallbackQuery, data, bot: CustomBot):
 
 async def user_wishes_keyboard_shift(call: CallbackQuery, data, bot: CustomBot):
     try:
-        offset = int(call.data[16:])
+        chatid, offset = call.data[16:].split()
+        chatid = int(chatid)
+        offset = int(offset)
     except:
         import traceback
         traceback.print_exc()
         return
+    
     participants = await get_group_participants(call.message.chat.id)
     userids = [(i, m.id) for i, m in enumerate(participants)]
-    markup = make_user_wishes_btns_markup(userids, offset)
+    markup = make_user_wishes_btns_markup(userids, chatid, offset)
     await bot.edit_message_reply_markup(call.message.chat.id, call.message.id, reply_markup=markup)
 
 
@@ -149,5 +152,5 @@ async def chat_members(call: CallbackQuery, data, bot: CustomBot):
     payload = call.data[13:].strip()
     chat = await bot.get_chat(int(payload))
     msg, userids = await get_group_participants_list(chat)
-    markup = make_user_wishes_btns_markup(userids, 0)
+    markup = make_user_wishes_btns_markup(userids, chat.id, 0)
     await bot.send_message(call.message.chat.id, msg, parse_mode='MarkdownV2', reply_markup=markup)
