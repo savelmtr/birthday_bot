@@ -147,7 +147,7 @@ async def user_go(message: Message, data, bot: CustomBot):
 
 async def chat_members(call: CallbackQuery, data, bot: CustomBot):
     payload = call.data[13:].strip()
-    chat = await self.bot.get_chat(int(payload))
+    chat = await bot.get_chat(int(payload))
     msg, userids = await get_group_participants_list(chat)
     markup = make_user_wishes_btns_markup(userids, 0)
     await bot.send_message(call.chat.id, msg, parse_mode='MarkdownV2', reply_markup=markup)
