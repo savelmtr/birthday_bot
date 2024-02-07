@@ -103,11 +103,10 @@ async def get_user_info(user_payload: TelebotUser):
     )
     async with AsyncSession.begin() as session:
         q = await session.execute(req)
-        data = q.all()
-        print(data)
+        data = q.one_or_none()
         if data is None:
             raise Exception(CALLBACK_TEXTS.database_error)
-    return data[0]
+    return data
 
 
 async def set_wishes(user_id: int, wishes: str):
