@@ -206,6 +206,7 @@ def make_user_wishes_btns_markup(
     userids: list[tuple[int, int]], groupid: int, offset: int=0) -> InlineKeyboardMarkup:
     markup = InlineKeyboardMarkup()
     btns = []
+    print(userids, offset)
     if offset:
         if len(userids[offset:]) > 7:
             stop = offset + 6
