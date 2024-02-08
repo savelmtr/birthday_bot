@@ -143,13 +143,15 @@ async def get_user_groups(userid: int) -> list[int]:
 
 
 def get_word_plural_form(word_forms: tuple[str,str,str], number: int):
+    if 10 < number < 15:
+        return word_forms[2]
     match int(str(number)[-1]):
-            case 1:
-                return word_forms[0]
-            case 2 | 3 | 4:
-                return word_forms[1]
-            case _:
-                return word_forms[2]
+        case 1:
+            return word_forms[0]
+        case 2 | 3 | 4:
+            return word_forms[1]
+        case _:
+            return word_forms[2]
 
 
 def how_old(birthday: datetime.date) -> int:
