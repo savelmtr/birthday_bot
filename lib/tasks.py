@@ -37,7 +37,7 @@ async def monthly(bot: CustomBot):
         ps = sorted([p for p in participants if p['groupid'] == gid], key=lambda u: when_bd_days(u['birthday']))
         for p in ps:
             birthday_boys.append(
-                f'⏺ {p["first_name"]} {p["last_name"]} {p["birthday"].day} '\
+                f'🎉 {p["first_name"]} {p["last_name"]} {p["birthday"].day} '\
                 f'{GENERATIVE_MONTHS[p["birthday"].month]}, {how_old_str(how_old(p["birthday"]) + 1)}')
         birthday_boys_list = '\n'.join(birthday_boys)
         await bot.send_message(gid, header + birthday_boys_list)
@@ -52,7 +52,7 @@ async def congrats(bot: CustomBot):
         ps = [p for p in participants if p['groupid'] == gid]
         if len(ps) > 1:
             header = CALLBACK_TEXTS.congrats_header_plural
-            bullet = '◾️ '
+            bullet = '🎉 '
         else:
             header = CALLBACK_TEXTS.congrats_header
             bullet = ''
