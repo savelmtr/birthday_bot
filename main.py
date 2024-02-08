@@ -39,8 +39,8 @@ bot.message_handler(content_types=['left_chat_member'])(user_go)
 
 
 TASKS = (
-    {'cronstr': '0 20 16 * *', 'coro': monthly, 'iterator': None, 'next_ft': None},
-    {'cronstr': '0 20 * * *', 'coro': congrats, 'iterator': None, 'next_ft': None},
+    {'cronstr': '18 20 8 * *', 'coro': monthly, 'iterator': None, 'next_ft': None},
+    {'cronstr': '18 20 * * *', 'coro': congrats, 'iterator': None, 'next_ft': None},
 )
 
 
