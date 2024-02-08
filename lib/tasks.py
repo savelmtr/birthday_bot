@@ -49,7 +49,7 @@ async def congrats(bot: CustomBot):
     groups = {p['groupid'] for p in participants}
     for gid in groups:
         birthday_boys = []
-        ps = (p for p in participants if p['groupid'] == gid)
+        ps = [p for p in participants if p['groupid'] == gid]
         if len(ps) > 1:
             header = CALLBACK_TEXTS.congrats_header_plural
             bullet = '◾️ '
