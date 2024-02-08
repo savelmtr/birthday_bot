@@ -171,9 +171,9 @@ def when_bd(birthday: datetime.date) -> str:
     if not birthday: return ''
     days = when_bd_days(birthday)
     bdstr = f'{birthday.day} {GENERATIVE_MONTHS[birthday.month]}'
-    if days < 20:
+    if days < 10:
         daystr = get_word_plural_form(('день', 'дня', 'дней'), days)
-        return f'{bdstr} **осталось {days} {daystr} до ДР**'
+        return f'{bdstr} {days} {daystr} до ДР'
     return bdstr
 
 
