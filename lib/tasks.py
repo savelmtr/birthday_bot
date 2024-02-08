@@ -52,7 +52,7 @@ async def congrats(bot: CustomBot):
         ps = (p for p in participants if p['groupid'] == gid)
         if len(ps) > 1:
             header = CALLBACK_TEXTS.congrats_header_plural
-            bullet = '⏺ '
+            bullet = '• '
         else:
             header = CALLBACK_TEXTS.congrats_header
             bullet = ''
