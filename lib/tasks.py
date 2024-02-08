@@ -15,10 +15,11 @@ async def tasks_manager(bot: CustomBot, tasks: tuple[dict]):
         ts['iterator'] = croniter.croniter(ts['cronstr'], STARTING_POINT)
         ts['next_ft'] = ts['iterator'].get_next(datetime.datetime)
     while True:
+        now = datetime.datetime.utcnow()
         for ts in tasks:
             try:
-                now = datetime.datetime.utcnow()
                 if now >= ts['next_ft']:
+                    print(ts)
                     await ts['coro'](bot)
                     ts['next_ft'] = ts['iterator'].get_next(datetime.datetime)
             except:
