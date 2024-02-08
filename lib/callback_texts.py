@@ -15,7 +15,7 @@ class CALLBACK_TEXTS:
     info_name = 'Ты представлен как: @{username} ({first_name} {last_name})'
     wishes_updated = 'Пожелания успешно обновлены'
     database_error='Ошибка базы данных при попытке получить информацию о пользователе.'
-    change_name_proposal = 'И как же вас зовут?'
+    change_name_proposal = 'Напишите своё имя и фамилию.'
     change_wishes_proposal = 'Введите ваши интересы и пожелания.'
     your_wishes = '\n На данный момент ваши пожелания: {wishes}'
     name_has_been_changed = 'Имя изменено на {new_name}'
