@@ -11,6 +11,7 @@ from lib.handlers import (callback_query, update_birthday, user_come, user_go, u
                             my_chats_updated, start, check_user_wishes, notext_input, chat_members,
                           update_name, update_wishes)
 from lib.states import States
+from lib.tasks import tasks_manager, monthly, congrats
 
 
 TOKEN = os.getenv('TOKEN')
@@ -37,5 +38,16 @@ bot.message_handler(content_types=['new_chat_members'])(user_come)
 bot.message_handler(content_types=['left_chat_member'])(user_go)
 
 
+TASKS = (
+    {'cronstr': '0 20 16 * *', 'coro': monthly, 'iterator': None, 'next_ft': None},
+    {'cronstr': '0 20 * * *', 'coro': congrats, 'iterator': None, 'next_ft': None},
+)
+
+
+async def main():
+    task = asyncio.create_task(tasks_manager(bot, TASKS))
+    await bot.polling()
+
+
 if __name__ == '__main__':
-    asyncio.run(bot.polling())
+    asyncio.run(main())

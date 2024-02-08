@@ -10,6 +10,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.future import select
 from telebot.types import User as TelebotUser, InlineKeyboardMarkup, InlineKeyboardButton, Chat
+from lib.callback_texts import GENERATIVE_MONTHS
 
 
 from lib.callback_texts import CALLBACK_TEXTS
@@ -24,20 +25,7 @@ engine = create_async_engine(
 AsyncSession = async_sessionmaker(engine, expire_on_commit=False)
 
 
-GENERATIVE_MONTHS = {
-    1: 'января',
-    2: 'февраля',
-    3: 'марта',
-    4: 'апреля',
-    5: 'мая',
-    6: 'июня',
-    7: 'июля',
-    8: 'августа',
-    9: 'сентября',
-    10: 'октября',
-    11: 'ноября',
-    12: 'декабря',
-}
+
 
 
 @cached(UserCache, lambda x: x.id)
@@ -164,16 +152,19 @@ def get_word_plural_form(word_forms: tuple[str,str,str], number: int):
                 return word_forms[2]
 
 
-def how_old(birthday: datetime.date) -> str:
+def how_old(birthday: datetime.date) -> int:
     if not birthday:
-        return ''
+        return 0
     td = datetime.date.today()
     if td.month > birthday.month or (td.month == birthday.month and td.day >= birthday.day):
-        old = td.year - birthday.year
+        return td.year - birthday.year
     else:
-        old = td.year - birthday.year - 1
-    ystr = get_word_plural_form(('год', 'года', 'лет'), old)
-    return f'({old} {ystr})'
+        return td.year - birthday.year - 1
+
+
+def how_old_str(age: int):
+    ystr = get_word_plural_form(('год', 'года', 'лет'), age)
+    return f'({age} {ystr})'
 
 
 def when_bd(birthday: datetime.date) -> str:
@@ -199,7 +190,7 @@ async def get_group_participants_list(chat) -> tuple[str, list[int]]:
     participants = await get_group_participants(chat.id)
     msg = CALLBACK_TEXTS.participants_header.format(groupname=chat.title)
     lst = [
-        f'{i+1}. @{m.username} {m.first_name} {m.last_name} {how_old(m.birthday)} {when_bd(m.birthday)} '
+        f'{i+1}. @{m.username} {m.first_name} {m.last_name} {how_old_str(how_old(m.birthday))} {when_bd(m.birthday)} '
         for i, m in enumerate(participants)
     ]
     msg += '\n'.join(lst)
@@ -272,6 +263,19 @@ async def get_group_participants(chatid: int) -> list[Users]:
     async with AsyncSession.begin() as session:
         q = await session.execute(req)
     return sorted(q.scalars().all(), key= lambda u: when_bd_days(u.birthday))
+
+
+async def get_participants_by_birthday(month: int, day: int|None=None):
+    req = select(
+        Users.first_name, Users.last_name, Users.birthday, Groups.id.label('groupid')
+        ).select_from(Groups).join(
+        Users, Groups.userid == Users.id).where(
+        func.extract("MONTH", Users.birthday) == month)
+    if day:
+        req.where(func.extract("DAY", Users.birthday) == day)
+    async with AsyncSession.begin() as session:
+        q = await session.execute(req)
+    return q.mappings().all()
 
 
 async def add_new_chat_member(userid: int, chatid: int):
