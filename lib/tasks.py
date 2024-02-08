@@ -28,7 +28,8 @@ async def tasks_manager(bot: CustomBot, tasks: tuple[dict]):
 
 
 async def monthly(bot: CustomBot):
-    month = datetime.date.today().month + 1 if month < 12 else 1
+    month = datetime.date.today().month
+    month = month + 1 if month < 12 else 1
     participants = await get_participants_by_birthday(month)
     groups = {p['groupid'] for p in participants}
     header = CALLBACK_TEXTS.notice_header.format(month=NOMINATIVE_MONTHS[month]).capitalize()
