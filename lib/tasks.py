@@ -31,7 +31,7 @@ async def monthly(bot: CustomBot):
     month = datetime.date.today().month
     participants = await get_participants_by_birthday(month)
     groups = {p['groupid'] for p in participants}
-    header = CALLBACK_TEXTS.notice_header.format(month=NOMINATIVE_MONTHS[month])
+    header = CALLBACK_TEXTS.notice_header.format(month=NOMINATIVE_MONTHS[month]).capitalize()
     for gid in groups:
         birthday_boys = []
         ps = sorted([p for p in participants if p['groupid'] == gid], key=lambda u: when_bd_days(u['birthday']))
