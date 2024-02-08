@@ -19,7 +19,6 @@ async def tasks_manager(bot: CustomBot, tasks: tuple[dict]):
         for ts in tasks:
             try:
                 if now >= ts['next_ft']:
-                    print(ts)
                     await ts['coro'](bot)
                     ts['next_ft'] = ts['iterator'].get_next(datetime.datetime)
             except:
