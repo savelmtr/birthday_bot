@@ -40,11 +40,12 @@ bot.message_handler(content_types=['left_chat_member'])(user_go)
 
 TASKS = (
     {'cronstr': '0 3 16 * *', 'coro': monthly, 'iterator': None, 'next_ft': None},
-    {'cronstr': '30 6 * * *', 'coro': congrats, 'iterator': None, 'next_ft': None},
+    {'cronstr': '0 3 * * *', 'coro': congrats, 'iterator': None, 'next_ft': None},
 )
 
 
 async def main():
+    await congrats(bot)
     task = asyncio.create_task(tasks_manager(bot, TASKS))
     await bot.polling()
 
