@@ -45,7 +45,9 @@ async def monthly(bot: CustomBot):
 
 async def congrats(bot: CustomBot):
     today = datetime.date.today()
+    print('today:', today.month, today.day)
     participants = await get_participants_by_birthday(today.month, today.day)
+    print(participants)
     groups = {p['groupid'] for p in participants}
     for gid in groups:
         birthday_boys = []
@@ -60,4 +62,4 @@ async def congrats(bot: CustomBot):
             birthday_boys.append(
                 f'{bullet}{p["first_name"]} {p["last_name"]} {how_old_str(how_old(p["birthday"]))}')
         birthday_boys_list = '\n'.join(birthday_boys)
-        await bot.send_message(gid, header + birthday_boys_list)
+        # await bot.send_message(gid, header + birthday_boys_list)

@@ -158,6 +158,7 @@ def how_old(birthday: datetime.date) -> int:
     if not birthday:
         return 0
     td = datetime.date.today()
+    print(td.month, birthday.month, td.day, birthday.day, td.year, birthday.year)
     if td.month > birthday.month or (td.month == birthday.month and td.day >= birthday.day):
         return td.year - birthday.year
     else:
