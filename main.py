@@ -45,7 +45,6 @@ TASKS = (
 
 
 async def main():
-    await congrats(bot)
     task = asyncio.create_task(tasks_manager(bot, TASKS))
     await bot.polling()
 
