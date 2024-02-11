@@ -158,7 +158,6 @@ def how_old(birthday: datetime.date) -> int:
     if not birthday:
         return 0
     td = datetime.date.today()
-    print(td.month, birthday.month, td.day, birthday.day, td.year, birthday.year)
     if td.month > birthday.month or (td.month == birthday.month and td.day >= birthday.day):
         return td.year - birthday.year
     else:
@@ -275,7 +274,7 @@ async def get_participants_by_birthday(month: int, day: int|None=None):
         Users, Groups.userid == Users.id).where(
         func.extract("MONTH", Users.birthday) == month)
     if day:
-        req.where(func.extract("DAY", Users.birthday) == day)
+        req = req.where(func.extract("DAY", Users.birthday) == day)
     async with AsyncSession.begin() as session:
         q = await session.execute(req)
     return q.mappings().all()
