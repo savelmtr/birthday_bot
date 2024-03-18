@@ -46,6 +46,7 @@ TASKS = (
 
 async def main():
     task = asyncio.create_task(tasks_manager(bot, TASKS))
+    await monthly(bot)
     await bot.polling()
 
 

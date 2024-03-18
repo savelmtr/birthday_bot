@@ -32,15 +32,15 @@ async def monthly(bot: CustomBot):
     participants = await get_participants_by_birthday(month)
     groups = {p['groupid'] for p in participants}
     header = CALLBACK_TEXTS.notice_header.format(month=NOMINATIVE_MONTHS[month]).capitalize()
+    footer = CALLBACK_TEXTS.month_notice_footer
     for gid in groups:
         birthday_boys = []
         ps = sorted([p for p in participants if p['groupid'] == gid], key=lambda u: when_bd_days(u['birthday']))
         for p in ps:
             birthday_boys.append(
-                f'🎉 {p["first_name"]} {p["last_name"]} {p["birthday"].day} '\
-                f'{GENERATIVE_MONTHS[p["birthday"].month]}, {how_old_str(how_old(p["birthday"]) + 1)}')
+                f'<b>{p["birthday"].day}{GENERATIVE_MONTHS[p["birthday"].month]}</b> {p["first_name"]} {p["last_name"]}')
         birthday_boys_list = '\n'.join(birthday_boys)
-        await bot.send_message(gid, header + birthday_boys_list)
+        await bot.send_message(gid, header + birthday_boys_list + footer, parse_mode='HTML')
 
 
 async def congrats(bot: CustomBot):
