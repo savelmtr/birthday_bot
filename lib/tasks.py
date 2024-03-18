@@ -31,14 +31,14 @@ async def monthly(bot: CustomBot):
     month = month + 1 if month < 12 else 1
     participants = await get_participants_by_birthday(month)
     groups = {p['groupid'] for p in participants}
-    header = CALLBACK_TEXTS.notice_header.format(month=NOMINATIVE_MONTHS[month]).capitalize()
+    header = CALLBACK_TEXTS.notice_header.format(month=NOMINATIVE_MONTHS[month].capitalize()).capitalize()
     footer = CALLBACK_TEXTS.month_notice_footer
     for gid in groups:
         birthday_boys = []
         ps = sorted([p for p in participants if p['groupid'] == gid], key=lambda u: when_bd_days(u['birthday']))
         for p in ps:
             birthday_boys.append(
-                f'<b>{p["birthday"].day}{GENERATIVE_MONTHS[p["birthday"].month]}</b> {p["first_name"]} {p["last_name"]}')
+                f'<b>{p["birthday"].day} {GENERATIVE_MONTHS[p["birthday"].month]}</b> {p["first_name"]} {p["last_name"]}')
         birthday_boys_list = '\n'.join(birthday_boys)
         await bot.send_message(gid, header + birthday_boys_list + footer, parse_mode='HTML')
 
