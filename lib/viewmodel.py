@@ -239,8 +239,8 @@ def make_chats_markup(chats: Chat) -> InlineKeyboardMarkup:
         InlineKeyboardButton(text=ch.title, callback_data=f'chat_members {ch.id}')
         for ch in chats
     )
-    for chline in zip_longest(*[chbutns] * 2):
-        markup.add(*chline)
+    # for chline in zip_longest(*[chbutns] * 2):
+    markup.add(*chbutns)
     return markup
 
 
